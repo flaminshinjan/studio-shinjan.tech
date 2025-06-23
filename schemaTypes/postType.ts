@@ -139,6 +139,131 @@ export const postType = defineType({
         {type: 'block'},
         {
           type: 'object',
+          name: 'table',
+          title: 'Table',
+          fields: [
+            {
+              name: 'caption',
+              type: 'string',
+              title: 'Table Caption',
+              description: 'Optional caption for the table',
+            },
+            {
+              name: 'rows',
+              type: 'array',
+              title: 'Table Rows',
+              of: [
+                {
+                  type: 'object',
+                  name: 'tableRow',
+                  title: 'Row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      title: 'Cells',
+                      of: [
+                        {
+                          type: 'object',
+                          name: 'tableCell',
+                          title: 'Cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'string',
+                              title: 'Content',
+                            },
+                            {
+                              name: 'isHeader',
+                              type: 'boolean',
+                              title: 'Header Cell',
+                              description: 'Mark this cell as a header (th)',
+                              initialValue: false,
+                            },
+                          ],
+                          preview: {
+                            select: {
+                              content: 'content',
+                              isHeader: 'isHeader',
+                            },
+                            prepare(selection) {
+                              const {content, isHeader} = selection
+                              return {
+                                title: content || 'Empty cell',
+                                subtitle: isHeader ? 'Header' : 'Data',
+                              }
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                  preview: {
+                    select: {
+                      cells: 'cells',
+                    },
+                    prepare(selection) {
+                      const {cells} = selection
+                      const cellCount = cells?.length || 0
+                      const firstCellContent = cells?.[0]?.content || 'Empty row'
+                      return {
+                        title: `Row (${cellCount} cells)`,
+                        subtitle: firstCellContent,
+                      }
+                    },
+                  },
+                },
+              ],
+              validation: (rule) => rule.min(1).error('Table must have at least one row'),
+            },
+            {
+              name: 'style',
+              type: 'string',
+              title: 'Table Style',
+              options: {
+                list: [
+                  {title: 'Default', value: 'default'},
+                  {title: 'Striped Rows', value: 'striped'},
+                  {title: 'Bordered', value: 'bordered'},
+                  {title: 'Compact', value: 'compact'},
+                  {title: 'Minimal', value: 'minimal'},
+                ],
+              },
+              initialValue: 'default',
+            },
+            {
+              name: 'alignment',
+              type: 'string',
+              title: 'Text Alignment',
+              options: {
+                list: [
+                  {title: 'Left', value: 'left'},
+                  {title: 'Center', value: 'center'},
+                  {title: 'Right', value: 'right'},
+                ],
+              },
+              initialValue: 'left',
+            },
+          ],
+          preview: {
+            select: {
+              caption: 'caption',
+              rows: 'rows',
+              style: 'style',
+            },
+            prepare(selection) {
+              const {caption, rows, style} = selection
+              const rowCount = rows?.length || 0
+              const colCount = rows?.[0]?.cells?.length || 0
+              return {
+                title: caption || 'Table',
+                subtitle: `${rowCount} rows × ${colCount} columns | Style: ${style}`,
+              }
+            },
+          },
+        },
+        {
+          type: 'object',
           name: 'codeBlock',
           title: 'Code Block',
           fields: [
@@ -206,6 +331,7 @@ export const postType = defineType({
               name: 'alt',
               type: 'string',
               title: 'Alternative text',
+              description: 'Important for SEO and accessibility',
             },
             {
               name: 'caption',
@@ -218,15 +344,75 @@ export const postType = defineType({
               title: 'Image Size',
               options: {
                 list: [
-                  {title: 'Small', value: 'small'},
-                  {title: 'Medium', value: 'medium'},
-                  {title: 'Large', value: 'large'},
+                  {title: 'Small (300px)', value: 'small'},
+                  {title: 'Medium (600px)', value: 'medium'},
+                  {title: 'Large (800px)', value: 'large'},
+                  {title: 'Extra Large (1000px)', value: 'xl'},
                   {title: 'Full Width', value: 'full'},
                 ],
               },
               initialValue: 'medium',
             },
+            {
+              name: 'alignment',
+              type: 'string',
+              title: 'Image Alignment',
+              options: {
+                list: [
+                  {title: 'Left', value: 'left'},
+                  {title: 'Center', value: 'center'},
+                  {title: 'Right', value: 'right'},
+                ],
+              },
+              initialValue: 'center',
+            },
+            {
+              name: 'aspectRatio',
+              type: 'string',
+              title: 'Aspect Ratio',
+              description: 'Control how the image is displayed to prevent cropping',
+              options: {
+                list: [
+                  {title: 'Original (No cropping)', value: 'original'},
+                  {title: 'Square (1:1)', value: 'square'},
+                  {title: 'Landscape (16:9)', value: 'landscape'},
+                  {title: 'Portrait (9:16)', value: 'portrait'},
+                  {title: 'Wide (21:9)', value: 'wide'},
+                ],
+              },
+              initialValue: 'original',
+            },
+            {
+              name: 'border',
+              type: 'boolean',
+              title: 'Add Border',
+              description: 'Add a subtle border around the image',
+              initialValue: false,
+            },
+            {
+              name: 'shadow',
+              type: 'boolean',
+              title: 'Add Shadow',
+              description: 'Add a drop shadow to the image',
+              initialValue: false,
+            },
           ],
+          preview: {
+            select: {
+              media: 'asset',
+              alt: 'alt',
+              size: 'size',
+              aspectRatio: 'aspectRatio',
+            },
+            prepare(selection) {
+              const {alt, size, aspectRatio} = selection
+              return {
+                title: alt || 'Image',
+                subtitle: `Size: ${size || 'medium'} | Ratio: ${aspectRatio || 'original'}`,
+                media: selection.media,
+              }
+            },
+          },
         },
       ],
     }),
